@@ -24,6 +24,7 @@ SCRIPT_HOME=$(dirname $0)
 ARCH=i386
 IMAGE_NAME=stack
 ENGINE=kvm
+EMULATOR=""
 export DIB_IMAGE_SIZE=10
 START_VM=yes
 ALWAYS_ELEMENTS='vm local-config stackuser ubuntu cloud-init-nocloud'
@@ -42,12 +43,13 @@ function show_options () {
     echo "      -o name       -- set the name of the VM and image file (stack)"
     echo "      -s size       -- set the image size (10 GB)"
     echo "      -e engine     -- set the virt engine to use (defaults to kvm)"
+    echo "      -m emulator   -- set the virt emulator to use (optional, def to qemu-kvm)"
     echo "      -n            -- don't automatically start the VM"
     echo
     exit 0
 }
 
-TEMP=`getopt -o hna:o:s: -n $SCRIPT_NAME -- "$@"`
+TEMP=`getopt -o hna:o:s:e:m: -n $SCRIPT_NAME -- "$@"`
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
 
 # Note the quotes around `$TEMP': they are essential!
@@ -59,6 +61,7 @@ while true ; do
         -o) export IMAGE_NAME=$2; shift 2 ;;
         -s) export DIB_IMAGE_SIZE=$2; shift 2 ;;
         -e) export ENGINE=$2; shift 2 ;;
+        -m) export EMULATOR=$2; shift 2 ;;
         -h) show_options;;
         -n) export START_VM=; shift ;;
         --) shift ; break ;;
@@ -105,7 +108,8 @@ sudo mv /tmp/$IMAGE_NAME.qcow2 /var/lib/libvirt/images/
 $SCRIPT_HOME/../bootstrap/configure-bootstrap-vm \
            --name $IMAGE_NAME \
            --image /var/lib/libvirt/images/$IMAGE_NAME.qcow2 \
-           --engine $ENGINE
+           --engine $ENGINE \
+           --emulator $EMULATOR
 
 VM_IP=''
 function poll_vm {
